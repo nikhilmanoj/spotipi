@@ -18,10 +18,21 @@ def display_album_art(image_url):
     response = requests.get(image_url)
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content)).convert('L')  # Convert to grayscale
-        img.thumbnail((40, 40))
+
+        # Resize the image to a fixed width while preserving the aspect ratio
+        new_width = 40
+        width_percent = (new_width / float(img.size[0]))
+        new_height = int((float(img.size[1]) * float(width_percent)))
+        img = img.resize((new_width, new_height), Image.ANTIALIAS)
+
         img_data = list(img.getdata())
 
         width, height = img.size
+        aspect_ratio = height / float(width)
+
+        # Adjust the aspect ratio for better representation
+        adjusted_height = int(aspect_ratio * new_width * 0.55)
+
         for i in range(0, len(img_data), width):
             row = img_data[i:i + width]
             row_ascii = "".join([ASCII_CHARS[pixel // 25] for pixel in row])
