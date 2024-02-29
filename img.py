@@ -20,14 +20,14 @@ def display_album_art(image_url):
         img = Image.open(BytesIO(response.content)).convert('L')  # Convert to grayscale
 
         # Resize the image to a fixed width and height for ASCII art
-        new_width, new_height = 40, 20
+        new_width, new_height = 80, 40
         img = img.resize((new_width, new_height), Image.ANTIALIAS)
 
         img_data = list(img.getdata())
 
         for i in range(0, len(img_data), new_width):
             row = img_data[i:i + new_width]
-            row_ascii = "".join([ASCII_CHARS[pixel // 25] for pixel in row])
+            row_ascii = "".join([ASCII_CHARS[pixel // 10] for pixel in row])
             print(row_ascii)
 
 # ASCII characters to represent different shades
