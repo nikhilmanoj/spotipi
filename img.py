@@ -21,8 +21,9 @@ def display_album_art(image_url):
         img.thumbnail((40, 40))
         img_data = list(img.getdata())
 
-        for i in range(0, len(img_data), img.width):
-            row = img_data[i:i + img.width]
+        width, height = img.size
+        for i in range(0, len(img_data), width):
+            row = img_data[i:i + width]
             row_ascii = "".join([ASCII_CHARS[pixel // 25] for pixel in row])
             print(row_ascii)
 
