@@ -19,22 +19,14 @@ def display_album_art(image_url):
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content)).convert('L')  # Convert to grayscale
 
-        # Resize the image to a fixed width while preserving the aspect ratio
-        new_width = 40
-        width_percent = (new_width / float(img.size[0]))
-        new_height = int((float(img.size[1]) * float(width_percent)))
+        # Resize the image to a fixed width and height for ASCII art
+        new_width, new_height = 40, 20
         img = img.resize((new_width, new_height), Image.ANTIALIAS)
 
         img_data = list(img.getdata())
 
-        width, height = img.size
-        aspect_ratio = height / float(width)
-
-        # Adjust the aspect ratio for better representation
-        adjusted_height = int(aspect_ratio * new_width * 0.55)
-
-        for i in range(0, len(img_data), width):
-            row = img_data[i:i + width]
+        for i in range(0, len(img_data), new_width):
+            row = img_data[i:i + new_width]
             row_ascii = "".join([ASCII_CHARS[pixel // 25] for pixel in row])
             print(row_ascii)
 
@@ -50,8 +42,9 @@ except spotipy.SpotifyException as e:
 
 # Check if there is a currently playing track
 if current_track and 'item' in current_track:
-    # Display the currently playing track title, device name, and album art
+    # Display the currently playing track title, artist, device name, and album art
     print("Currently playing:", current_track['item']['name'])
+    print("Artist:", ", ".join([artist['name'] for artist in current_track['item']['artists']]))
     print("Device:", current_track['device']['name'])
     display_album_art(current_track['item']['album']['images'][0]['url'])
 else:
@@ -77,8 +70,10 @@ while True:
         display_album_art(current_track['item']['album']['images'][0]['url'])
     elif choice == '2':
         sp.next_track(device_id=current_track['device']['id'])
-        print("Skipped to next track.")
         current_track = sp.current_playback()
+        print("Skipping to next track:")
+        print("Track:", current_track['item']['name'])
+        print("Artist:", ", ".join([artist['name'] for artist in current_track['item']['artists']]))
         display_album_art(current_track['item']['album']['images'][0]['url'])
     elif choice == '3':
         print("Exiting.")
