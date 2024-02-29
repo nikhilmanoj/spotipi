@@ -17,10 +17,9 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
 def display_album_art(image_url):
     response = requests.get(image_url)
     if response.status_code == 200:
-        img = Image.open(BytesIO(response.content))
+        img = Image.open(BytesIO(response.content)).convert('L')  # Convert to grayscale
         img.thumbnail((40, 40))
-        img = img.convert("L")  # Convert to grayscale
-        img_data = img.getdata()
+        img_data = list(img.getdata())
 
         for i in range(0, len(img_data), img.width):
             row = img_data[i:i + img.width]
