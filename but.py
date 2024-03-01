@@ -2,11 +2,11 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import spotipy.util as util
 import requests
-import subprocess
 from io import BytesIO
 from PIL import Image
 import RPi.GPIO as GPIO
 import time
+from ascii_magic import from_image_path
 
 # Set up Spotify OAuth
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
@@ -21,16 +21,19 @@ GPIO_PIN = 24  # GPIO pin number
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(GPIO_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-# Helper function to display album art using 'w3m'
-def display_album_art_w3m(image_url):
+# Helper function to display ASCII art
+def display_ascii_art(image_url):
     response = requests.get(image_url)
     if response.status_code == 200:
         img = Image.open(BytesIO(response.content))
         img_path = "/tmp/album_art.jpg"  # Temporary path for the image
         img.save(img_path)
 
-        # Use 'w3m' to display the image in the terminal
-        subprocess.run(["w3m", img_path])
+        # Convert the image to ASCII art
+        ascii_art = from_image_path(img_path)
+
+        # Display the ASCII art
+        print(ascii_art)
 
 # Function to handle play/pause on GPIO button press
 def play_pause_callback(channel):
@@ -43,7 +46,7 @@ def play_pause_callback(channel):
         else:
             sp.start_playback(device_id=current_track['device']['id'])
             print("Playback started.")
-        display_album_art_w3m(current_track['item']['album']['images'][0]['url'])
+        display_ascii_art(current_track['item']['album']['images'][0]['url'])
     else:
         print("No track is currently playing.")
 
@@ -56,11 +59,11 @@ try:
 
     # Check if there is a currently playing track
     if current_track and 'item' in current_track:
-        # Display the currently playing track title, artist, device name, and album art using 'w3m'
+        # Display the currently playing track title, artist, device name, and ASCII art
         print("Currently playing:", current_track['item']['name'])
         print("Artist:", ", ".join([artist['name'] for artist in current_track['item']['artists']]))
         print("Device:", current_track['device']['name'])
-        display_album_art_w3m(current_track['item']['album']['images'][0]['url'])
+        display_ascii_art(current_track['item']['album']['images'][0]['url'])
     else:
         print("No track is currently playing.")
 
