@@ -6,7 +6,6 @@ from io import BytesIO
 from PIL import Image
 import RPi.GPIO as GPIO
 import time
-from ascii_magic import from_image_path
 
 # Set up Spotify OAuth
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
@@ -21,19 +20,25 @@ GPIO_PIN = 24  # GPIO pin number
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(GPIO_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-# Helper function to display ASCII art
-def display_ascii_art(image_url):
+# Helper function to display album art as ASCII art
+def display_album_art(image_url):
     response = requests.get(image_url)
     if response.status_code == 200:
-        img = Image.open(BytesIO(response.content))
-        img_path = "/tmp/album_art.jpg"  # Temporary path for the image
-        img.save(img_path)
+        img = Image.open(BytesIO(response.content)).convert('L')  # Convert to grayscale
 
-        # Convert the image to ASCII art
-        ascii_art = from_image_path(img_path)
+        # Resize the image to a fixed width and height for ASCII art
+        new_width, new_height = 80, 40
+        img = img.resize((new_width, new_height), Image.ANTIALIAS)
 
-        # Display the ASCII art
-        print(ascii_art)
+        img_data = list(img.getdata())
+
+        for i in range(0, len(img_data), new_width):
+            row = img_data[i:i + new_width]
+            row_ascii = "".join([ASCII_CHARS[pixel // 10] for pixel in row])
+            print(row_ascii)
+
+# ASCII characters to represent different shades
+ASCII_CHARS = "@%#*+=-:. "
 
 # Function to handle play/pause on GPIO button press
 def play_pause_callback(channel):
@@ -46,7 +51,8 @@ def play_pause_callback(channel):
         else:
             sp.start_playback(device_id=current_track['device']['id'])
             print("Playback started.")
-        display_ascii_art(current_track['item']['album']['images'][0]['url'])
+        current_track = sp.current_playback()
+        display_album_art(current_track['item']['album']['images'][0]['url'])
     else:
         print("No track is currently playing.")
 
@@ -63,7 +69,7 @@ try:
         print("Currently playing:", current_track['item']['name'])
         print("Artist:", ", ".join([artist['name'] for artist in current_track['item']['artists']]))
         print("Device:", current_track['device']['name'])
-        display_ascii_art(current_track['item']['album']['images'][0]['url'])
+        display_album_art(current_track['item']['album']['images'][0]['url'])
     else:
         print("No track is currently playing.")
 
